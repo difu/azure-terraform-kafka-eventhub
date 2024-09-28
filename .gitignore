@@ -1,0 +1,7 @@
+/terraform/env.sh
+/kcat.config
+/terraform/.terraform/
+/terraform/.terraform.lock.hcl
+terraform.tfstate*
+
+.idea
