@@ -119,3 +119,11 @@ Testbed to explore Azure Event Hub. This is a simple example of how to create an
     ```sh
     docker run -it --rm --entrypoint /bin/sh edenhill/kcat:1.7.1
     ```
+
+7. **Connect to the virtual machine**
+   
+   ```shell
+   terraform output -raw tls_private_key > /tmp/secureadmin_id_rsa
+   ssh -i /tmp/secureadmin_id_rsa secureadmin@[PUBLIC_IP]
+   ```
+   

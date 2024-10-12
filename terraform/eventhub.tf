@@ -34,6 +34,16 @@ output "eventhub_connection_string" {
   value = azurerm_eventhub_namespace.eh_namespace.default_primary_connection_string
   sensitive = true
 }
+
+output "EVENT_HUB_FULLY_QUALIFIED_NAMESPACE" {
+  value = azurerm_eventhub_namespace.eh_namespace.default_primary_connection_string
+  sensitive = true
+}
+
+output "EVENT_HUB_NAME" {
+  value = azurerm_eventhub.eh_eventhub.name
+}
+
 output "eventhub_connection_string_listen" {
   value = azurerm_eventhub_namespace_authorization_rule.ns_sap_listen.primary_connection_string
   sensitive = true
