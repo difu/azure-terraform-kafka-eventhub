@@ -21,7 +21,20 @@ resource "azurerm_eventhub_consumer_group" "eh_consumergroup" {
   resource_group_name = azurerm_resource_group.eh_rg.name
 }
 
+resource "azurerm_eventhub_namespace_authorization_rule" "ns_sap_listen" {
+  name                = "ns_sap_listen"
+  namespace_name      = azurerm_eventhub_namespace.eh_namespace.name
+  resource_group_name = azurerm_eventhub_namespace.eh_namespace.resource_group_name
+  listen              = true
+  send                = false
+  manage              = false
+}
+
 output "eventhub_connection_string" {
   value = azurerm_eventhub_namespace.eh_namespace.default_primary_connection_string
+  sensitive = true
+}
+output "eventhub_connection_string_listen" {
+  value = azurerm_eventhub_namespace_authorization_rule.ns_sap_listen.primary_connection_string
   sensitive = true
 }
