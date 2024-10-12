@@ -1,101 +1,121 @@
 # azure-terraform-eventhub
-Testbed to explore Azure Event Hub 
 
-This is a simple example of how you can create an Azure Event Hub installation.
-It is meant to be a starting point and a step-by-step tutorial to become familiar with the Azure Event Hub service.
+Testbed to explore Azure Event Hub. This is a simple example of how to create an Azure Event Hub installation. It is meant to be a starting point and a step-by-step tutorial to become familiar with the Azure Event Hub service.
 
- - Prepare your environment, set your Azure subscription.
+## Steps
 
-```shell
-az login
-```
-Remember the _subscription id_ (NOT the name).
+1. **Prepare your environment, set your Azure subscription:**
 
-```shell
-az account set --subscription "YOUR_SUBSCRIPTION_ID"
-```
+    ```sh
+    az login
+    ```
 
- - Create a service principal to authenticate terraform to manage event hub infrastructure
+    Remember the _subscription id_ (NOT the name).
 
-```shell
-az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/YOUR_SUBSCRIPTION_ID" --name "terraform_principal"
-```
-This command will return all the necessary credentials to authenticate. It is recommended setting these values as
-environment variables rather than saving them in your Terraform configuration.
-Set the following environment variables. Be sure to update the variable values with the values Azure returned
-in the previous command.
+    ```sh
+    az account set --subscription "YOUR_SUBSCRIPTION_ID"
+    ```
 
-```shell
-export ARM_CLIENT_ID="<APP_ID>"
-export ARM_CLIENT_SECRET="<PASSWORD"
-export ARM_SUBSCRIPTION_ID="<YOUR_SUBSCRIPTION_ID>"
-export ARM_TENANT_ID="<TENANT_ID>"
-```
+2. **Create a service principal to authenticate Terraform to manage Event Hub infrastructure:**
 
-__Note:__ you may write that in a file, but be sure to exclude this from version control!
+    ```sh
+    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/YOUR_SUBSCRIPTION_ID" --name "terraform_principal"
+    ```
 
-After that run the usual _terraform_ commands.
+    This command will return all the necessary credentials to authenticate. It is recommended to set these values as environment variables rather than saving them in your Terraform configuration.
 
-```shell
-terraform init
-terraform apply
-```
+    Set the following environment variables. Be sure to update the variable values with the values Azure returned in the previous command.
 
-As the returned output contains sensitive information, you must explicitly output the value. 
+    ```sh
+    export ARM_CLIENT_ID="<APP_ID>"
+    export ARM_CLIENT_SECRET="<PASSWORD>"
+    export ARM_SUBSCRIPTION_ID="<YOUR_SUBSCRIPTION_ID>"
+    export ARM_TENANT_ID="<TENANT_ID>"
+    ```
 
-```shell
-terraform output eventhub_connection_string
-```
+    **Note:** You may write this in a file, but be sure to exclude this from version control!
 
-Use this output for the next step.
+3. **Run the usual Terraform commands:**
 
- - Connect to Kafka endpoint
+    ```sh
+    terraform init
+    terraform apply
+    ```
 
-Use _kcat_ as a simple command line client to produce or consume data over Kafka. 
-First, create a config file and put in the information from the previous step
+    As the returned output contains sensitive information, you must explicitly output the value.
 
-```shell
-metadata.broker.list=mynamespace.servicebus.windows.net:9093
-security.protocol=SASL_SSL
-sasl.mechanisms=PLAIN
-sasl.username=$ConnectionString
-sasl.password=Endpoint=sb://mynamespace.servicebus.windows.net/;SharedAccessKeyName=XXXXXX;SharedAccessKey=XXXXXX
-# Replace
-# - 'metadata.broker.list' with your namespace FQDN (change 'mynamespace' to your namespace name)
-# - 'sasl.password' with your namespace's connection string 
-```
+    ```sh
+    terraform output eventhub_connection_string
+    ```
 
-Point to this configuration file and export its absolute path stored in $KAFKACAT_CONFIG
+    Use this output for the next step.
 
-```shell
+4. **Connect to Kafka endpoint:**
+
+    Use _kcat_ as a simple command line client to produce or consume data over Kafka. First, create a config file and put in the information from the previous step:
+
+    ```plaintext
+    metadata.broker.list=mynamespace.servicebus.windows.net:9093
+    security.protocol=SASL_SSL
+    sasl.mechanisms=PLAIN
+    sasl.username=$ConnectionString
+    sasl.password=Endpoint=sb://mynamespace.servicebus.windows.net/;SharedAccessKeyName=XXXXXX;SharedAccessKey=XXXXXX
+    ```
+
+    Replace:
+    - `metadata.broker.list` with your namespace FQDN (change 'mynamespace' to your namespace name)
+    - `sasl.password` with your namespace's connection string.
+
+    Point to this configuration file and export its absolute path stored in `KAFKACAT_CONFIG`:
+
+    ```sh
     export KAFKACAT_CONFIG=/absolute/path/to/config
-```
+    ```
 
-Verify that all works properly by running
+    Verify that all works properly by running:
 
-```shell
-kcat -b difueventhubnamespace.servicebus.windows.net:9093 -L
-% KAFKA_CONFIG is deprecated!
-% Rename KAFKA_CONFIG to KCAT_CONFIG
-% Reading configuration from file /home/difu/Programming/azure-terraform-eventhub/kcat.config
-Metadata for all topics (from broker 0: sasl_ssl://difueventhubnamespace.servicebus.windows.net:9093/0):
- 1 brokers:
-  broker 0 at difueventhubnamespace.servicebus.windows.net:9093 (controller)
- 1 topics:
-  topic "difuexampleeventhub" with 2 partitions:
-    partition 0, leader 0, replicas: , isrs: 
-    partition 1, leader 0, replicas: , isrs: 
+    ```sh
+    kcat -b difueventhubnamespace.servicebus.windows.net:9093 -L
+    ```
 
-```
+    Note that `KAFKA_CONFIG` is deprecated. Rename `KAFKA_CONFIG` to `KCAT_CONFIG`. For example:
 
-Produce some messages:
+    ```sh
+    % Reading configuration from file /home/user/azure-terraform-eventhub/kcat.config
+    Metadata for all topics (from broker 0: sasl_ssl://difueventhubnamespace.servicebus.windows.net:9093/0):
+    1 brokers:
+    broker 0 at difueventhubnamespace.servicebus.windows.net:9093 (controller)
+    1 topics:
+    topic "difuexampleeventhub" with 2 partitions:
+        partition 0, leader 0, replicas: , isrs: 
+        partition 1, leader 0, replicas: , isrs: 
+    ```
 
-```shell
-for MESSAGE in 1 2 3 4; do echo "Welcome to Dirks Kafka, Message $MESSAGE" | kcat -b difueventhubnamespace.servicebus.windows.net:9093 -P -t difuexampleeventhub -H "header1=header value" -H "nullheader" -H "emptyheader=" -H "header1=duplicateIsOk"; done
-```
+5. **Produce some messages:**
 
-Consume them:
+    ```sh
+    for MESSAGE in 1 2 3 4; do
+        echo "Welcome to Kafka, Message $MESSAGE" | kcat -b difueventhubnamespace.servicebus.windows.net:9093 -P -t difuexampleeventhub -H "header1=header value" -H "nullheader" -H "emptyheader=" -H "header1=duplicateIsOk"
+    done
+    ```
 
-```shell
-kcat -C  -b difueventhubnamespace.servicebus.windows.net:9093 -t difuexampleeventhub
-```
+6. **Consume them:**
+
+    ```sh
+    kcat -C -b difueventhubnamespace.servicebus.windows.net:9093 -t difuexampleeventhub
+    ```
+
+    **Note:**
+
+    When trying to use `kcat` on macOS, you might encounter several errors, particularly when consuming messages:
+
+    ```plaintext
+    % ERROR: Local: Broker transport failure: sasl_ssl://difueventhubnamespace.servicebus.windows.net:9093/0: Disconnected (after 67ms in state UP)
+    % ERROR: Local: All broker connections are down: 1/1 brokers are down: terminating
+    ```
+
+    The Docker image works in such cases:
+
+    ```sh
+    docker run -it --rm --entrypoint /bin/sh edenhill/kcat:1.7.1
+    ```
